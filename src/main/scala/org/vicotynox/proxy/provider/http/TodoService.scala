@@ -1,12 +1,14 @@
-package org.vicotynox.ProxyProvider.http
+package org.vicotynox.proxy.provider.http
 
-import org.vicotynox.ProxyProvider.repository.{update, _}
-import org.vicotynox.ProxyProvider._
+import org.vicotynox.proxy.provider.repository.{update, _}
+import org.vicotynox.proxy.provider._
 import io.circe.generic.auto._
 import io.circe.{Decoder, Encoder}
 import org.http4s._
 import org.http4s.circe._
 import org.http4s.dsl.Http4sDsl
+import org.vicotynox.proxy.provider.{TodoId, TodoItem, TodoItemPatchForm, TodoItemPostForm}
+import org.vicotynox.proxy.provider.repository.TodoRepository
 import zio.RIO
 import zio.interop.catz._
 
@@ -52,7 +54,8 @@ final case class TodoService[R <: TodoRepository](rootUri: String) {
       case DELETE -> Root / LongVar(id) =>
         for {
           item <- getById(TodoId(id))
-          result <- item.map(todoItem => delete(todoItem.id)).fold(NotFound())(_.flatMap(Ok(_)))
+          result <- item.map(todoItem => delete(todoItem.id))
+            .fold(NotFound())(_ => Ok())
         } yield result
     }
   }

@@ -36,6 +36,7 @@ libraryDependencies ++= Seq(
   "dev.zio" %% "zio" % "1.0.0-RC12-1",
   "dev.zio" %% "zio-streams" % "1.0.0-RC12-1",
   "dev.zio" %% "zio-interop-cats" % "2.0.0.0-RC3",
+  "org.typelevel" %% "cats-effect" % "2.0.0",
 
   //http4s
   "org.http4s" %% "http4s-blaze-server" % http4sVersion,

@@ -1,4 +1,4 @@
-package org.vicotynox.ProxyProvider
+package org.vicotynox.proxy.provider
 
 import zio.ZIO
 

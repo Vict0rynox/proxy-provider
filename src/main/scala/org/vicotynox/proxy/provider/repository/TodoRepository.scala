@@ -1,6 +1,7 @@
-package org.vicotynox.ProxyProvider.repository
+package org.vicotynox.proxy.provider.repository
 
-import org.vicotynox.ProxyProvider.{TodoId, TodoItem, TodoItemPatchForm, TodoItemPostForm}
+import org.vicotynox.proxy.provider.{TodoItem, TodoItemPatchForm, TodoItemPostForm}
+import org.vicotynox.proxy.provider.{TodoId, TodoItem, TodoItemPatchForm, TodoItemPostForm}
 import zio._
 
 trait TodoRepository extends Serializable {

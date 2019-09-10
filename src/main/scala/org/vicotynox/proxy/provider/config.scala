@@ -1,6 +1,6 @@
-package org.vicotynox.ProxyProvider
+package org.vicotynox.proxy.provider
 
-import doobie.hikari._
+import doobie.h2.H2Transactor
 import doobie.util.transactor.Transactor
 import org.flywaydb.core.Flyway
 import zio._
@@ -28,8 +28,7 @@ object config {
 
   def mkTransactor(cfg: DbConfig, connectEC: ExecutionContext, transactEC: ExecutionContext): Managed[Throwable, Transactor[Task]]
   = {
-    val xa = HikariTransactor.newHikariTransactor[Task](
-      cfg.driver,
+    val xa = H2Transactor.newH2Transactor[Task](
       cfg.url,
       cfg.user,
       cfg.password,
@@ -37,7 +36,7 @@ object config {
       transactEC)
 
     val res = xa.allocated.map {
-      case(transactor, cleanupM) => Reservation(ZIO.succeed(transactor), _ => cleanupM.orDie)
+      case(transactor, cleanupM ) => Reservation(ZIO.succeed(transactor), _ => cleanupM.orDie)
     }.uninterruptible
 
     Managed(res)
