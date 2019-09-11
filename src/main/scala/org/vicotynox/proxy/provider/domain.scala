@@ -27,3 +27,24 @@ final case class TodoItemPatchForm(
                                     completed: Option[Boolean] = None,
                                     order: Option[Int] = None
                                   )
+
+
+final case class ProxyId(value: Long) extends AnyVal
+
+final case class ProxyPayload(host: String, port: Int, country: Option[String] = None, level: Option[Int] = None, rating: Int = 0)
+
+final case class Proxy(id: ProxyId, payload: ProxyPayload) {
+  def update(from: ProxyItemPatchForm): Proxy =
+    this.copy(id = this.id, payload = payload.copy(
+      host = from.host.getOrElse(payload.host),
+      port = from.port.getOrElse(payload.port),
+      country = from.country.orElse(payload.country),
+      level = from.level.orElse(payload.level),
+      rating = from.level.getOrElse(payload.rating)
+    ))
+}
+
+
+final case class ProxyItemPostForm(host: String, port: Int, country: Option[String] = None, level: Option[Int] = None)
+
+final case class ProxyItemPatchForm(host: Option[String], port: Option[Int], country: Option[String] = None, level: Option[Int] = None, rating: Int = 0)

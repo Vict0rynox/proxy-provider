@@ -5,3 +5,14 @@ CREATE TABLE TODOS
     COMPLETED BOOLEAN NOT NULL,
     ORDERING  INT
 );
+
+
+CREATE TABLE PROXY
+(
+    id      BIGSERIAL PRIMARY KEY,
+    host    varchar not null,
+    port    int     not null,
+    country varchar(2) default null,
+    level   int(4)     default null,
+    rating  int default 0
+)
