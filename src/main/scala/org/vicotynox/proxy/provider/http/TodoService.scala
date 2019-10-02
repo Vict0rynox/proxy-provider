@@ -12,6 +12,7 @@ import org.vicotynox.proxy.provider.repository.TodoRepository
 import zio.RIO
 import zio.interop.catz._
 
+
 final case class TodoService[R <: TodoRepository](rootUri: String) {
 
   import TodoService._

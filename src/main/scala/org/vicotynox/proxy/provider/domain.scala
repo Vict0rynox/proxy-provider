@@ -1,5 +1,7 @@
 package org.vicotynox.proxy.provider
 
+import java.security.MessageDigest
+
 final case class TodoId(value: Long) extends AnyVal
 
 final case class TodoPayload(title: String, completed: Boolean, order: Option[Int])
@@ -28,16 +30,23 @@ final case class TodoItemPatchForm(
                                     order: Option[Int] = None
                                   )
 
+//Proxy
 
-final case class ProxyId(value: Long) extends AnyVal
+final case class ProxyId(value: String) extends AnyVal
+
+object ProxyId {
+  def apply(payload: ProxyPayload): ProxyId =
+    new ProxyId(MessageDigest.getInstance("MD5")
+      .digest(s"${payload.host}:${payload.port}".getBytes()).map(_.toChar).mkString)
+}
 
 final case class ProxyPayload(host: String, port: Int, country: Option[String] = None, level: Option[Int] = None, rating: Int = 0)
 
-final case class Proxy(id: ProxyId, payload: ProxyPayload) {
+final case class Proxy(payload: ProxyPayload) {
+  val id: ProxyId = ProxyId(payload)
+
   def update(from: ProxyItemPatchForm): Proxy =
-    this.copy(id = this.id, payload = payload.copy(
-      host = from.host.getOrElse(payload.host),
-      port = from.port.getOrElse(payload.port),
+    this.copy(payload = payload.copy(
       country = from.country.orElse(payload.country),
       level = from.level.orElse(payload.level),
       rating = from.level.getOrElse(payload.rating)
@@ -45,6 +54,10 @@ final case class Proxy(id: ProxyId, payload: ProxyPayload) {
 }
 
 
-final case class ProxyItemPostForm(host: String, port: Int, country: Option[String] = None, level: Option[Int] = None)
+final case class ProxyItemPostForm(host: String, port: Int, country: Option[String] = None, level: Option[Int] = None) {
+  def asProxyPayload: ProxyPayload = ProxyPayload(host, port, country, level)
 
-final case class ProxyItemPatchForm(host: Option[String], port: Option[Int], country: Option[String] = None, level: Option[Int] = None, rating: Int = 0)
+  def asProxy = Proxy(this.asProxyPayload)
+}
+
+final case class ProxyItemPatchForm(country: Option[String] = None, level: Option[Int] = None, rating: Int = 0)

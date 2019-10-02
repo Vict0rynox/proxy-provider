@@ -18,12 +18,12 @@ scalacOptions := Seq(
   "-language:higherKinds",
   "-language:existentials",
   "-Ypartial-unification",
-  "-Xfatal-warnings",
+  //"-Xfatal-warnings",
   "-Xlint:-infer-any,_",
   "-Ywarn-value-discard",
   "-Ywarn-numeric-widen",
   "-Ywarn-extra-implicit",
-  "-Ywarn-unused:_",
+  //"-Ywarn-unused:_",
   "-Ywarn-inaccessible",
   "-Ywarn-nullary-override",
   "-Ywarn-nullary-unit",
@@ -39,9 +39,11 @@ libraryDependencies ++= Seq(
   "org.typelevel" %% "cats-effect" % "2.0.0",
 
   //http4s
+  "org.asynchttpclient" % "async-http-client" % "2.10.3",
   "org.http4s" %% "http4s-blaze-server" % http4sVersion,
   "org.http4s" %% "http4s-blaze-client" % http4sVersion,
   "org.http4s" %% "http4s-circe" % http4sVersion,
+  "org.http4s" %% "http4s-async-http-client" % http4sVersion,
   "org.http4s" %% "http4s-dsl" % http4sVersion,
   "io.circe" %% "circe-generic" % "0.12.0-RC4",
 
