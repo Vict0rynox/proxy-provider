@@ -132,15 +132,15 @@ object Main extends App {
           }
       }
 
-      proxyQueue <- Queue.sliding[ProxyPayload](100)
-      loaderTicker = Schedule.spaced(5.second) && Schedule.recurs(1)
+      proxyQueue <- Queue.sliding[ProxyPayload](2000)
+      loaderTicker = Schedule.spaced(1.second) && Schedule.recurs(1)
       handleTicker = Schedule.spaced(1.second) && Schedule.recurs(300)
 
       sendTask <- (for {
         proxies <- proxys("proxy.dat").provide(program.Environment)
         _ <- ZIO.collectAll(proxies.map(proxyQueue.offer))
         _ <- putStrLn(s"Send: $proxies")
-      } yield ()).repeat(loaderTicker).fork
+      } yield ()).fork
 
       handle1 <- (for {
         proxyPayload <- proxyQueue.take
@@ -154,9 +154,9 @@ object Main extends App {
         _ <- checkProxy(proxyPayload).provide(program.Environment)
       } yield ()).repeat(handleTicker).fork
 
-      allTasks = sendTask.zip(handle1).zip(handle2)
-
-      _ <- allTasks.join
+      _ <- sendTask.join
+      _ <- handle1.join
+      _ <- handle2.join
       _ <- putStrLn(s"${store.get}")
     } yield program).foldM(err => putStrLn(s"Exceution faild with $err") *> ZIO.succeed(1), _ => ZIO.succeed(0))
 }
