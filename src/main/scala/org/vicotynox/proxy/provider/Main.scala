@@ -6,7 +6,7 @@ import java.nio.charset.StandardCharsets
 import java.security.KeyStore.TrustedCertificateEntry
 
 import com.sun.deploy.cache.InMemoryLocalApplicationProperties
-import org.asynchttpclient.{Dsl, Response}
+import org.asynchttpclient.{DefaultAsyncHttpClient, DefaultAsyncHttpClientConfig, Dsl, RequestBuilder, Response}
 import org.asynchttpclient.proxy.ProxyServer
 import org.http4s.Status
 import org.http4s.blaze.http.HttpClient
@@ -101,12 +101,20 @@ object Main extends App {
     } yield proxies
 
   def checkProxy(proxyPayload: ProxyPayload): ZIO[TestEnvironment, Nothing, Unit] = {
-    val rand = math.random()
-    if (rand < 0.25) {
+    val cf = new DefaultAsyncHttpClientConfig.Builder()
+      .setProxyServer(new ProxyServer.Builder(proxyPayload.host, proxyPayload.port))
+      .build
+
+    val c = new DefaultAsyncHttpClient(cf)
+    val rb =
+      new RequestBuilder("GET").setUrl("https://ir.ebaystatic.com/rs/v/fxxj3ttftm5ltcqnto1o4baovyl.png")
+
+    val response: Try[Response] = Try(c.prepareRequest(rb).execute.get)
+    if (response.isSuccess && response.get.getStatusCode == 200) {
       val proxy = Proxy(proxyPayload)
       ZIO.accessM[TestEnvironment](_.proxyRepository.create(proxy))
       putStrLn(s"Save proxy: $proxy")
-    } else putStrLn(s"proxy not valid ${rand}")
+    } else putStrLn(s"proxy not valid ${proxyPayload}\t${response}")
   }
 
   override def run(args: List[String]): ZIO[Environment, Nothing, Int] = (
@@ -116,7 +124,7 @@ object Main extends App {
       store <- Ref.make(Map.empty[ProxyId, Proxy])
       program <- ZIO.runtime[TestEnvironment].provideSome[Environment] {
         base =>
-          new Clock with Console with Blocking with FileSource with DidsoftParser with ProxyRepository {
+          new Clock with Console with Blocking with FileSource with CoolproxyParser with ProxyRepository {
             override val clock: Clock.Service[Any] = base.clock
             override val console: Console.Service[Any] = base.console
             override val blocking: Blocking.Service[Any] = base.blocking
@@ -125,7 +133,7 @@ object Main extends App {
       }
 
       proxyQueue <- Queue.sliding[ProxyPayload](100)
-      loaderTicker = Schedule.spaced(5.second) && Schedule.recurs(100)
+      loaderTicker = Schedule.spaced(5.second) && Schedule.recurs(1)
       handleTicker = Schedule.spaced(1.second) && Schedule.recurs(300)
 
       sendTask <- (for {
@@ -134,13 +142,21 @@ object Main extends App {
         _ <- putStrLn(s"Send: $proxies")
       } yield ()).repeat(loaderTicker).fork
 
-      handle <- (for {
+      handle1 <- (for {
         proxyPayload <- proxyQueue.take
         _ <- putStrLn(s"Take: $proxyPayload")
         _ <- checkProxy(proxyPayload).provide(program.Environment)
       } yield ()).repeat(handleTicker).fork
 
-      allTasks = sendTask.zip(handle)
+      handle2 <- (for {
+        proxyPayload <- proxyQueue.take
+        _ <- putStrLn(s"Take: $proxyPayload")
+        _ <- checkProxy(proxyPayload).provide(program.Environment)
+      } yield ()).repeat(handleTicker).fork
+
+      allTasks = sendTask.zip(handle1).zip(handle2)
+
       _ <- allTasks.join
+      _ <- putStrLn(s"${store.get}")
     } yield program).foldM(err => putStrLn(s"Exceution faild with $err") *> ZIO.succeed(1), _ => ZIO.succeed(0))
 }

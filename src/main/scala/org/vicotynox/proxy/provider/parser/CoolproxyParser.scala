@@ -3,19 +3,19 @@ package org.vicotynox.proxy.provider.parser
 import org.vicotynox.proxy.provider.ProxyPayload
 import zio.{UIO, ZIO}
 
-trait DidsoftParser extends Parser {
+trait CoolproxyParser extends Parser {
   override val parser: Parser.Service[Any] = new Parser.Service[Any] {
 
     override def parse(line: String): UIO[Option[ProxyPayload]] =
-      ZIO.succeed(DidsoftParser.parse(line))
+      ZIO.succeed(CoolproxyParser.parse(line))
   }
 }
 
-object DidsoftParser {
-  private val proxy = """([\d]{1,3}.[\d]{1,3}.[\d]{1,3}.[\d]{1,3}):([\d]+)#([A-Za-z]{2})""".r
+object CoolproxyParser {
+  private val proxy = """([\d]{1,3}.[\d]{1,3}.[\d]{1,3}.[\d]{1,3}):([\d]+)""".r
 
   def parse(line: String): Option[ProxyPayload] = line match {
-    case proxy(ip, port, country) => Some(ProxyPayload(ip, port.toInt, Some(country)))
+    case proxy(ip, port) => Some(ProxyPayload(ip, port.toInt))
     case _ => None
   }
 }
